@@ -1,0 +1,12 @@
+{
+  "name": "bubblechat",
+  "version": "1.0.0",
+  "description": "Retro pixel chat 2000s",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.17.0"
+  }
+}
