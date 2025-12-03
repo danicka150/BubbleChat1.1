@@ -1,12 +1,13 @@
 {
   "name": "bubblechat",
   "version": "1.0.0",
-  "description": "Retro pixel chat 2000s",
   "main": "server.js",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  },
   "scripts": {
     "start": "node server.js"
-  },
-  "dependencies": {
-    "ws": "^8.17.0"
   }
 }

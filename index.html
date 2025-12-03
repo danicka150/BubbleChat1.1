@@ -1,145 +1,116 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>BubbleChat</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-    html, body {
+    body {
         margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        background: #4f4f4f;
-        font-family: 'Press Start 2P', monospace;
-        image-rendering: pixelated;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        background: #808080;
+        font-family: "Press Start 2P", monospace;
+        font-size: 12px;
     }
-
-    @font-face {
-        font-family: 'Press Start 2P';
-        src: url('https://fonts.gstatic.com/s/pressstart2p/v11/e3t4euO8T-267oIAQAu6jDQyK3nC4w.ttf');
+    #reg {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        background: #d0d0d0;
+        padding: 20px;
+        border: 4px solid black;
+        width: 300px;
+        text-align: center;
     }
-
-    .window {
-        width: 90%;
-        height: 90%;
-        background: #222;
-        border: 4px solid #000;
-        padding: 10px;
+    #chat {
+        display: none;
+        height: 100vh;
         display: flex;
         flex-direction: column;
     }
-
-    h1 {
-        text-align: center;
-        font-size: 20px;
-        margin-bottom: 10px;
-        color: #fff;
-        text-shadow: 0 0 4px #000;
-    }
-
     #messages {
         flex: 1;
         overflow-y: auto;
-        background: #333;
-        border: 3px solid #000;
-        padding: 8px;
+        background: #a0a0a0;
+        padding: 10px;
+        border-bottom: 4px solid black;
+    }
+    #input {
+        display: flex;
+        background: #d0d0d0;
+        padding: 10px;
+    }
+    #input input {
+        flex: 1;
+        padding: 5px;
+        font-family: inherit;
         font-size: 12px;
     }
-
-    .nick {
+    #input button {
+        margin-left: 10px;
+        padding: 6px;
+        font-family: inherit;
         cursor: pointer;
     }
-
-    input, button {
-        padding: 8px;
-        background: #111;
-        border: 2px solid #000;
-        color: #fff;
-        font-family: inherit;
-    }
+    .msg { margin-bottom: 10px; }
+    .nick { cursor: pointer; }
+    .system { color: black; opacity: 0.7; margin-bottom: 10px; }
 </style>
 </head>
 <body>
-<div class="window">
-    <h1>BubbleChat</h1>
 
-    <div id="login">
-        <input id="nick" type="text" placeholder="Введите ник" />
-        <button onclick="enterChat()">Войти</button>
-    </div>
+<div id="reg">
+    <p>Введите ник:</p>
+    <input id="nickname" type="text" maxlength="16">
+    <br><br>
+    <button onclick="enterChat()">Войти</button>
+</div>
 
-    <div id="chat">
-        <div id="messages"></div>
-        <div id="msgInput">
-            <input id="text" type="text" placeholder="Сообщение..." />
-            <button onclick="sendMsg()">OK</button>
-        </div>
+<div id="chat">
+    <div id="messages"></div>
+    <div id="input">
+        <input id="text" type="text" placeholder="Написать сообщение…">
+        <button onclick="sendMsg()">Отправить</button>
     </div>
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
-let nickname = "";
-let ws = new WebSocket("ws://localhost:3000");
-
-ws.onmessage = (msg) => {
-    const box = document.getElementById("messages");
-    const div = document.createElement("div");
-
-    let text = msg.data;
-
-    // сохраняем цвет ника в словаре
-    window.nickColors = window.nickColors || {};
-
-    if (text.includes(":")) {
-        const nick = text.split(":")[0];
-
-        if (!window.nickColors[nick]) {
-            window.nickColors[nick] = '#' + Math.floor(Math.random()*16777215).toString(16);
-        }
-
-        const nickSpan = document.createElement("span");
-        nickSpan.textContent = nick;
-        nickSpan.style.color = window.nickColors[nick];
-        nickSpan.className = "nick";
-        nickSpan.onclick = () => {
-            document.getElementById("text").value = "@" + nick + " ";
-        };
-
-        const msgSpan = document.createElement("span");
-        msgSpan.textContent = text.substring(nick.length + 1);
-
-        div.appendChild(nickSpan);
-        div.appendChild(document.createTextNode(":"));
-        div.appendChild(msgSpan);
-    } else {
-        div.style.color = "#ddd";
-        div.textContent = text;
-    }
-
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-};
-};
+const socket = io();
+const msgBox = document.getElementById("messages");
 
 function enterChat() {
-    const n = document.getElementById("nick").value.trim();
-    if (!n) return;
-    nickname = n;
-
-    document.getElementById("login").style.display = "none";
+    const nick = document.getElementById("nickname").value.trim();
+    if (!nick) return;
+    socket.emit("set-nickname", nick);
+    document.getElementById("reg").style.display = "none";
     document.getElementById("chat").style.display = "flex";
-
-    ws.send("[SYSTEM] " + nickname + " вошёл в чат");
 }
 
+socket.on("system", txt => {
+    msgBox.innerHTML += `<div class="system">* ${txt}</div>`;
+    msgBox.scrollTop = msgBox.scrollHeight;
+});
+
+socket.on("chat-message", data => {
+    msgBox.innerHTML += `
+        <div class="msg">
+            <span class="nick" style="color:${data.color}" onclick="reply('${data.nick}')">${data.nick}</span>:
+            <span>${data.text}</span>
+        </div>
+    `;
+    msgBox.scrollTop = msgBox.scrollHeight;
+});
+
 function sendMsg() {
-    const txt = document.getElementById("text").value.trim();
-    if (!txt) return;
-    ws.send(nickname + ": " + txt);
+    const t = document.getElementById("text").value.trim();
+    if (!t) return;
+    socket.emit("chat-message", t);
     document.getElementById("text").value = "";
+}
+
+function reply(nick) {
+    document.getElementById("text").value = "@" + nick + " ";
+    document.getElementById("text").focus();
 }
 </script>
 
