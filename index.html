@@ -10,10 +10,12 @@
         margin: 0;
         background: #808080;
         font-family: "Press Start 2P", monospace;
-        font-size: 10px;
+        font-size: 10px; /* тонкий пиксельный шрифт */
+        letter-spacing: 0.5px;
         image-rendering: pixelated;
     }
 
+    /* Регистрация */
     #reg {
         position: absolute;
         top: 50%; left: 50%;
@@ -24,8 +26,10 @@
         width: 90%;
         max-width: 300px;
         text-align: center;
+        box-sizing: border-box;
     }
 
+    /* Чат */
     #chat {
         display: none;
         width: 100vw;
@@ -41,12 +45,15 @@
         padding: 10px;
         border-bottom: 4px solid black;
         font-size: 10px;
+        line-height: 12px;
+        box-sizing: border-box;
     }
 
     #input {
         display: flex;
         background: #d0d0d0;
         padding: 8px;
+        box-sizing: border-box;
     }
 
     #input input {
@@ -54,6 +61,7 @@
         padding: 8px;
         font-family: inherit;
         font-size: 12px;
+        box-sizing: border-box;
     }
 
     #input button {
@@ -62,23 +70,13 @@
         font-family: inherit;
         font-size: 12px;
         cursor: pointer;
+        flex-shrink: 0;
     }
 
     .msg { margin-bottom: 8px; word-break: break-word; }
     .nick { cursor: pointer; }
     .system { color: black; opacity: 0.7; margin-bottom: 8px; }
 
-    /* === ИГРОВОЕ ОКНО === */
-    #game {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 150px;
-        height: 150px;
-        border: 3px solid black;
-        background: #5c94fc;
-        image-rendering: pixelated;
-    }
 </style>
 </head>
 <body>
@@ -91,10 +89,7 @@
 </div>
 
 <div id="chat">
-    <canvas id="game" width="150" height="150"></canvas>
-
     <div id="messages"></div>
-
     <div id="input">
         <input id="text" type="text" placeholder="Написать сообщение…">
         <button onclick="sendMsg()">Отправить</button>
@@ -103,8 +98,6 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-/* === ЧАТ === */
-
 const socket = io();
 const msgBox = document.getElementById("messages");
 
@@ -142,112 +135,6 @@ function reply(nick) {
     document.getElementById("text").value = "@" + nick + " ";
     document.getElementById("text").focus();
 }
-
-/* === МИНИ-МАЙН === */
-
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-const W = 15;  // ширина мира в блоках
-const H = 15;  // высота мира в блоках
-const BS = 10; // размер блока
-
-// МИР 2D
-let world = [];
-for (let y = 0; y < H; y++) {
-    world[y] = [];
-    for (let x = 0; x < W; x++) {
-        if (y === H - 1) world[y][x] = 1; // земля
-        else world[y][x] = 0;
-    }
-}
-
-// 0 — воздух
-// 1 — земля
-// 2 — трава
-// 3 — дерево
-
-// БОТЫ
-const bots = [
-    {
-        name: "Валера",
-        x: 3, y: 13,
-        inv: 0,
-        color: "red",
-        target: {x: 10, y: 13}
-    },
-    {
-        name: "Киса",
-        x: 12, y: 13,
-        inv: 0,
-        color: "pink",
-        target: {x: 5, y: 13}
-    }
-];
-
-// ДВИЖЕНИЕ
-function moveBot(bot) {
-    if (bot.x < bot.target.x) bot.x++;
-    else if (bot.x > bot.target.x) bot.x--;
-
-    if (bot.y < bot.target.y) bot.y++;
-    else if (bot.y > bot.target.y) bot.y--;
-}
-
-// ДОБЫЧА
-function mine(bot) {
-    if (world[bot.y][bot.x] !== 0) {
-        bot.inv++;
-        world[bot.y][bot.x] = 0;
-    }
-}
-
-// ПОСТРОЙКА
-function build(bot) {
-    if (bot.inv > 0) {
-        if (world[bot.y - 1][bot.x] === 0) {
-            world[bot.y - 1][bot.x] = 3;
-            bot.inv--;
-        }
-    }
-}
-
-// АИ БОТОВ
-function botAI(bot) {
-    if (Math.random() < 0.4) mine(bot);
-    else if (Math.random() < 0.4) build(bot);
-    else moveBot(bot);
-}
-
-// ОТРИСОВКА
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // мир
-    for (let y = 0; y < H; y++) {
-        for (let x = 0; x < W; x++) {
-            if (world[y][x] === 1) ctx.fillStyle = "#7a4f2b";
-            else if (world[y][x] === 3) ctx.fillStyle = "#c28c3a";
-            else ctx.fillStyle = "transparent";
-
-            ctx.fillRect(x * BS, y * BS, BS, BS);
-        }
-    }
-
-    // боты
-    for (let bot of bots) {
-        ctx.fillStyle = bot.color;
-        ctx.fillRect(bot.x * BS, bot.y * BS, BS, BS);
-    }
-}
-
-// ЦИКЛ
-setInterval(() => {
-    bots.forEach(botAI);
-    draw();
-}, 300);
-
-draw();
 </script>
 
 </body>
