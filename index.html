@@ -10,12 +10,11 @@
         margin: 0;
         background: #808080;
         font-family: "Press Start 2P", monospace;
-        font-size: 10px; /* тонкий пиксельный шрифт */
+        font-size: 10px;
         letter-spacing: 0.5px;
         image-rendering: pixelated;
     }
 
-    /* Регистрация */
     #reg {
         position: absolute;
         top: 50%; left: 50%;
@@ -29,7 +28,6 @@
         box-sizing: border-box;
     }
 
-    /* Чат */
     #chat {
         display: none;
         width: 100vw;
@@ -77,6 +75,17 @@
     .nick { cursor: pointer; }
     .system { color: black; opacity: 0.7; margin-bottom: 8px; }
 
+    /* мини-игра */
+    #gamebox {
+        position: fixed;
+        right: 10px;
+        bottom: 10px;
+        width: 200px;
+        height: 200px;
+        border: 4px solid black;
+        background: #4d4d4d;
+        image-rendering: pixelated;
+    }
 </style>
 </head>
 <body>
@@ -95,6 +104,9 @@
         <button onclick="sendMsg()">Отправить</button>
     </div>
 </div>
+
+<!-- мини-экран игры -->
+<canvas id="gamebox" width="200" height="200"></canvas>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -130,11 +142,101 @@ function sendMsg() {
     socket.emit("chat-message", t);
     document.getElementById("text").value = "";
 }
-
 function reply(nick) {
     document.getElementById("text").value = "@" + nick + " ";
     document.getElementById("text").focus();
 }
+</script>
+
+<!-- МИНИ 2D ИГРА -->
+<script>
+const canvas = document.getElementById("gamebox");
+const ctx = canvas.getContext("2d");
+
+const W = 20, H = 20;        // поле 20x20
+const TILE = 10;            // размер плитки
+
+// карта
+let map = [];
+for (let y = 0; y < H; y++) {
+    map[y] = [];
+    for (let x = 0; x < W; x++) {
+        map[y][x] = (y >= 14) ? "dirt" : "air";
+    }
+}
+
+// боты
+function makeBot(name, color) {
+    return {
+        name,
+        x: Math.floor(Math.random() * W),
+        y: 10,
+        color,
+        inventory: { dirt: 0 },
+        dir: 1
+    };
+}
+
+let valera = makeBot("Валера", "#ff4040");
+let kisa   = makeBot("Киса", "#ff80ff");
+
+// рисуем блок
+function drawBlock(x, y, type) {
+    if (type === "dirt") ctx.fillStyle = "#7a4e2b";
+    else if (type === "air") ctx.fillStyle = "#4d4d4d";
+    ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+}
+
+// рисуем бота
+function drawBot(bot) {
+    ctx.fillStyle = bot.color;
+    ctx.fillRect(bot.x * TILE, bot.y * TILE, TILE, TILE);
+}
+
+// логика бота
+function botAI(bot) {
+    if (Math.random() < 0.5) bot.dir = Math.random() < 0.5 ? -1 : 1;
+    let nx = bot.x + bot.dir;
+    if (nx >= 0 && nx < W) bot.x = nx;
+
+    // добыча блока
+    if (map[bot.y+1] && map[bot.y+1][bot.x] === "dirt") {
+        if (Math.random() < 0.3) {
+            map[bot.y+1][bot.x] = "air";
+            bot.inventory.dirt++;
+        }
+    }
+
+    // поставить блок
+    if (bot.inventory.dirt > 0) {
+        let yy = bot.y+1;
+        if (map[yy] && map[yy][bot.x] === "air") {
+            map[yy][bot.x] = "dirt";
+            bot.inventory.dirt--;
+        }
+    }
+}
+
+function loop() {
+    botAI(valera);
+    botAI(kisa);
+
+    // рендер
+    ctx.clearRect(0,0,200,200);
+
+    for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+            drawBlock(x, y, map[y][x]);
+        }
+    }
+
+    drawBot(valera);
+    drawBot(kisa);
+
+    requestAnimationFrame(loop);
+}
+
+loop();
 </script>
 
 </body>
