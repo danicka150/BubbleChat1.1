@@ -46,7 +46,13 @@ const valeraRandomPhrases = [
   "Кто-то вообще умеет писать?",
   "Эх… скучно.",
   "Чат умер?",
-  "Пойду в окно посмотрю. Шутка, я бот."
+  "Пойду в окно посмотрю. Шутка, я бот.",
+  "че бля",
+  "мда...",
+  "что за ерунда?",
+  "вы серьёзно?",
+  "ох уж эти люди...",
+  "лол, опять вы"
 ];
 
 // комплименты и троллинг Валеры
@@ -89,13 +95,11 @@ setTimeout(() => { io.emit("system", `${valera.nick} вошёл в чат`); val
 setTimeout(() => { io.emit("system", `${kisa.nick} вошёл в чат`); kisa.joined = true; }, 1000);
 
 /* -------------------- Валера действия -------------------- */
-// Валера кидает рандомные фразы каждые 20–45 секунд
 setInterval(() => {
   if (!valera.joined) return;
   sendBotMessage(valera, random(valeraRandomPhrases));
 }, 20000 + Math.random() * 25000);
 
-// Валера комплименты/троллинг раз в 30–60 секунд случайному пользователю
 setInterval(() => {
   if (!valera.joined) return;
   const clients = Array.from(io.sockets.sockets.values())
@@ -110,11 +114,10 @@ setInterval(() => {
 }, 30000 + Math.random() * 30000);
 
 /* -------------------- Киса действия -------------------- */
-// Киса кидает рандомную фразу раз в 30–60 секунд
 setInterval(() => {
   if (!kisa.joined) return;
   sendBotMessage(kisa, random(kisa.phrases));
-}, 30000 + Math.random() * 30000);
+}, 15000 + Math.random() * 15000); // пишет чаще
 
 /* ===================== SOCKET.IO ===================== */
 io.on("connection", (socket) => {
@@ -123,6 +126,13 @@ io.on("connection", (socket) => {
     socket.nickname = nick;
     socket.color = getRandomColor();
     io.emit("system", `${nick} вошёл в чат`);
+
+    // Киса приветствует нового пользователя
+    if (kisa.joined) {
+      setTimeout(() => {
+        sendBotMessage(kisa, `@${nick}, привет!`);
+      }, 500);
+    }
   });
 
   // обработка сообщений
