@@ -36,7 +36,6 @@ const valera = {
   joined: false
 };
 
-// Валера: рандомные фразы
 const valeraRandomPhrases = [
   "Кто вообще тут?",
   "Чё молчим?",
@@ -52,10 +51,16 @@ const valeraRandomPhrases = [
   "что за ерунда?",
   "вы серьёзно?",
   "ох уж эти люди...",
-  "лол, опять вы"
+  "лол, опять вы",
+  "иди на хуй",
+  "ты охуел?",
+  "да ну нахуй",
+  "ёбаный чат",
+  "ну и долбоёбы тут сидят",
+  "мне насрать",
+  "опять эти мудаки"
 ];
 
-// комплименты и троллинг Валеры
 const valeraCompliments = [
   "я влюблен в твою красоту",
   "ты сияешь сегодня",
@@ -66,7 +71,9 @@ const valeraTrolls = [
   "ну ты и клоун конечно...",
   "мда… что за бред",
   "лучше бы молчал",
-  "я IQ теряю, читая тебя"
+  "я IQ теряю, читая тебя",
+  "ох уж эти идиоты",
+  "ну и глупость"
 ];
 
 /* ===================== КИСА-БОТ ===================== */
@@ -75,9 +82,10 @@ const kisa = {
   color: "#ff69b4",
   joined: false,
   phrases: [
-    "привет",
     "ты такой интересный",
-    "с тобой так интересно"
+    "с тобой так интересно",
+    "ммм, интересно общаться",
+    "ух ты, как круто"
   ]
 };
 
@@ -113,11 +121,30 @@ setInterval(() => {
   sendBotMessage(valera, `@${target.nickname}, ${action}`);
 }, 30000 + Math.random() * 30000);
 
-/* -------------------- Киса действия -------------------- */
+/* -------------------- Валера <-> Киса -------------------- */
+setInterval(() => {
+  if (!valera.joined || !kisa.joined) return;
+  // Валера флиртует с Кисой 50% вероятности
+  if (Math.random() < 0.5) {
+    sendBotMessage(valera, `@${kisa.nick}, ${random(valeraCompliments)}`);
+  }
+  // Киса отвечает Валере
+  if (Math.random() < 0.5) {
+    sendBotMessage(kisa, `@${valera.nick}, ${random(kisa.phrases)}`);
+  }
+}, 60000 + Math.random() * 30000);
+
+/* -------------------- Киса действия с пользователями -------------------- */
 setInterval(() => {
   if (!kisa.joined) return;
-  sendBotMessage(kisa, random(kisa.phrases));
-}, 15000 + Math.random() * 15000); // пишет чаще
+  const clients = Array.from(io.sockets.sockets.values())
+    .filter(s => s.nickname && s.nickname !== kisa.nick);
+
+  if (clients.length === 0) return;
+
+  const target = random(clients);
+  sendBotMessage(kisa, `@${target.nickname}, ${random(kisa.phrases)}`);
+}, 15000 + Math.random() * 15000);
 
 /* ===================== SOCKET.IO ===================== */
 io.on("connection", (socket) => {
@@ -127,7 +154,7 @@ io.on("connection", (socket) => {
     socket.color = getRandomColor();
     io.emit("system", `${nick} вошёл в чат`);
 
-    // Киса приветствует нового пользователя
+    // Киса приветствует нового пользователя через @
     if (kisa.joined) {
       setTimeout(() => {
         sendBotMessage(kisa, `@${nick}, привет!`);
