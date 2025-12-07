@@ -59,8 +59,6 @@ const valeraRandomPhrases = [
   "ну и долбоёбы тут сидят",
   "мне насрать",
   "опять эти мудаки"
-  "котак ебаный"
-  "хуй"
 ];
 
 const valeraCompliments = [
