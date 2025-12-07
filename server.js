@@ -20,17 +20,17 @@ app.get("/", async (req, res) => {
     }
 });
 
-// случайный цвет ника
+// случайный цвет ника для обычных пользователей
 function getRandomColor() {
     const colors = ["#ff4040", "#40ff40", "#4080ff", "#ff80ff", "#ffff40", "#40ffff", "#ffa040"];
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// --- БОТЫ -------------------------------------------------
+// --- Боты ---
 const BOT_VALERA = { name: "Валера", color: "#ffa500" };
 const BOT_KISA   = { name: "Киса", color: "#ff66cc" };
 
-// Валера — основные фразы
+// Валера — базовые фразы
 const valeraReplies = [
     "че бля", "а чё происходит?", "я тут", "я не понял...", "кто меня звал?", "шо надо?",
     "я занят был вообще-то", "кто в чате?", "а вы нормальные?", "че сидим?", "я ща приду...",
@@ -82,11 +82,11 @@ const kisaHello = [
     "я тут, привет!", "ра-рада видеть…", "мяу, кто тут новенький?"
 ];
 
-// Кулдауны ботов
+// кулдауны
 let valeraCooldown = 0;
 let kisaCooldown = 0;
 
-// --- СОКЕТЫ -------------------------------------------------
+// --- СОКЕТЫ ---
 io.on("connection", socket => {
 
     socket.on("set-nickname", nick => {
@@ -106,11 +106,11 @@ io.on("connection", socket => {
     socket.on("chat-message", msg => {
 
         io.emit("chat-message", { nick: socket.nickname, color: socket.color, text: msg });
-const lower = msg.toLowerCase();
+
+        const lower = msg.toLowerCase();
         const mentionedValera = lower.includes("@валера");
         const mentionedKisa = lower.includes("@киса");
-
-        // Валера отвечает, если его упомянули
+// Валера отвечает, если его упомянули
         if (mentionedValera) {
             let reply = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
 
@@ -123,8 +123,7 @@ const lower = msg.toLowerCase();
         }
 
         // Валера ревнует Кису
-        if (!mentionedValera && lower.includes("@киса") && Math.random() < 0.7 && valeraCooldown <= Date.now()) {
-            valeraCooldown = Date.now() + 2000;
+        if (!mentionedValera && lower.includes("@киса") && Math.random() < 0.7) {
             const r = valeraJealous[Math.floor(Math.random() * valeraJealous.length)];
             setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 400);
         }
@@ -136,8 +135,7 @@ const lower = msg.toLowerCase();
         }
 
         // Валера флиртует с Кисой
-        if (Math.random() < 0.08 && valeraCooldown <= Date.now()) {
-            valeraCooldown = Date.now() + 2000;
+        if (Math.random() < 0.08) {
             const r = valeraFlirt[Math.floor(Math.random() * valeraFlirt.length)];
             setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 400);
         }
@@ -149,8 +147,7 @@ const lower = msg.toLowerCase();
         }
 
         // Киса случайно пишет сама
-        if (Math.random() < 0.05 && kisaCooldown <= Date.now()) {
-            kisaCooldown = Date.now() + 2000;
+        if (Math.random() < 0.05) {
             const r = kisaReplies[Math.floor(Math.random() * kisaReplies.length)];
             setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, r), 400);
         }
