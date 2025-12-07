@@ -27,7 +27,6 @@ function getRandomColor() {
 }
 
 // --- БОТЫ -------------------------------------------------
-
 const BOT_VALERA = { name: "Валера", color: "#ffa500" };
 const BOT_KISA   = { name: "Киса", color: "#ff66cc" };
 
@@ -88,7 +87,6 @@ let valeraCooldown = 0;
 let kisaCooldown = 0;
 
 // --- СОКЕТЫ -------------------------------------------------
-
 io.on("connection", socket => {
 
     socket.on("set-nickname", nick => {
@@ -157,15 +155,14 @@ const lower = msg.toLowerCase();
             setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, r), 400);
         }
 
-        // Валера пишет сам по рандому
-        if (Math.random() < 0.06 && valeraCooldown <= Date.now()) {
-            valeraCooldown = Date.now() + 1500;
-            const r = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
-            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 350);
-        }
-
     });
 });
+
+// --- Валера пишет каждые 5 секунд ---
+setInterval(() => {
+    const r = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
+    sendBot(BOT_VALERA.name, BOT_VALERA.color, r);
+}, 5000);
 
 // отправка сообщения бота
 function sendBot(nick, color, text) {
