@@ -49,6 +49,24 @@ function sendBot(nick, color, text) {
     io.emit("chat-message", { nick, color, text });
 }
 
+// Валера пишет каждые 3–7 секунд
+function valeraTalk() {
+    const msg = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
+    console.log("Валера пишет:", msg); // для проверки на сервере
+    sendBot(BOT_VALERA.name, BOT_VALERA.color, msg);
+    setTimeout(valeraTalk, 3000 + Math.random() * 4000); // 3–7 секунд
+}
+valeraTalk();
+
+// Киса пишет каждые 5–10 секунд
+function kisaTalk() {
+    const msg = kisaReplies[Math.floor(Math.random() * kisaReplies.length)];
+    console.log("Киса пишет:", msg); // для проверки на сервере
+    sendBot(BOT_KISA.name, BOT_KISA.color, msg);
+    setTimeout(kisaTalk, 5000 + Math.random() * 5000); // 5–10 секунд
+}
+kisaTalk();
+
 // сокеты
 io.on("connection", socket => {
     socket.on("set-nickname", nick => {
@@ -56,7 +74,7 @@ io.on("connection", socket => {
         socket.color = getRandomColor();
         io.emit("system", ${nick} вошёл в чат);
 
-        // Киса приветствует
+        // Киса приветствует нового пользователя сразу
         setTimeout(() => {
             const msg = kisaReplies[Math.floor(Math.random() * kisaReplies.length)];
             sendBot(BOT_KISA.name, BOT_KISA.color, msg);
@@ -67,12 +85,6 @@ io.on("connection", socket => {
         io.emit("chat-message", { nick: socket.nickname, color: socket.color, text: msg });
     });
 });
-
-// Валера пишет каждые 5 секунд
-setInterval(() => {
-    const msg = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
-    sendBot(BOT_VALERA.name, BOT_VALERA.color, msg);
-}, 5000);
 
 // запуск сервера
 server.listen(PORT, () => console.log(BubbleChat запущен на порту ${PORT}));
