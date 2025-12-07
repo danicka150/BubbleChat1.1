@@ -1,4 +1,4 @@
-mport express from "express";
+import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { readFile } from "fs/promises";
@@ -28,33 +28,39 @@ function getRandomColor() {
 
 // --- БОТЫ -------------------------------------------------
 
-const BOT_VALERA = { name: "Валера", color: "#ffa500" }; // оранжевый
-const BOT_KISA   = { name: "Киса", color: "#ff66cc" };   // розовый
+const BOT_VALERA = { name: "Валера", color: "#ffa500" };
+const BOT_KISA   = { name: "Киса", color: "#ff66cc" };
 
-// Реплики Валеры
+// Валера — основные фразы
 const valeraReplies = [
     "че бля", "а чё происходит?", "я тут", "я не понял...", "кто меня звал?", "шо надо?",
     "я занят был вообще-то", "кто в чате?", "а вы нормальные?", "че сидим?", "я ща приду...",
     "не зови меня просто так", "да-да, я тут", "чел ты...", "я думал я один", "че делаете?",
-    "я считаю что вы странные", "мдааа...", "ладно, я пришел", "чё за шум?", "это кто тут?"
+    "я считаю что вы странные", "мдааа...", "ладно, я пришел", "чё за шум?", "это кто тут?",
+    "давайте базарить!", "я тут сижу и думаю...", "кому что сказать?", "я щас вас всех слушаю",
+    "мне интересно кто тут самый шумный", "я бы сказал пару слов", "что происходит, люди?", 
+    "кто со мной?", "мне скучно, давайте общаться!"
 ];
 
 // Валера злится на оскорбления/маты
 const valeraAngry = [
     "сам такой", "тебе ебать что ли?", "не груби мне", "слышь ты, полегче",
     "ты че охуел?", "ща дам в табло", "ага, очень смешно", "рот закрой",
-    "чел, ты реально даун?", "сам с собой разговариваешь?", "я тебе щас дам", "щёлкну по лбу щас"
+    "чел, ты реально даун?", "сам с собой разговариваешь?", "я тебе щас дам", "щёлкну по лбу щас",
+    "не пиши мне так", "я тебя ща научу!", "отстань от меня!"
 ];
 
 // Валера флиртует с Кисой
 const valeraFlirt = [
     "киса... где ты?", "киса, мне скучно без тебя", "киса, я думаю о тебе",
-    "киса, ты самая красивая тут", "киса, пойдем в дм?", "киса, ну ответь мне...", "кисааааа…"
+    "киса, ты самая красивая тут", "киса, пойдем в дм?", "киса, ну ответь мне...", "кисааааа…",
+    "мне нравится твоя улыбка, кисонька", "ты такая милая, кисуля"
 ];
 
 // Валера ревнует
 const valeraJealous = [
-    "эй, кто это с Кисой?", "не смей её трогать!", "киса, это кто?!", "я ревную...", "подожди, это кто?"
+    "эй, кто это с Кисой?", "не смей её трогать!", "киса, это кто?!", "я ревную...",
+    "подожди, это кто?", "не смей, я слежу!"
 ];
 
 // Киса обычные реплики
@@ -102,54 +108,62 @@ io.on("connection", socket => {
     socket.on("chat-message", msg => {
 
         io.emit("chat-message", { nick: socket.nickname, color: socket.color, text: msg });
-
-        const lower = msg.toLowerCase();
+const lower = msg.toLowerCase();
         const mentionedValera = lower.includes("@валера");
         const mentionedKisa = lower.includes("@киса");
 
         // Валера отвечает, если его упомянули
         if (mentionedValera) {
             let reply = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
-const rude = ["сука", "хуй", "пид", "долб", "еба"];
+
+            const rude = ["сука", "хуй", "пид", "долб", "еба"];
             if (rude.some(w => lower.includes(w))) {
                 reply = valeraAngry[Math.floor(Math.random() * valeraAngry.length)];
             }
 
-            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, reply), 400);
+            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, reply), 300);
         }
 
-        // Валера ревнует, если кто-то упомянул Кису кроме него
-        if (!mentionedValera && lower.includes("@киса") && Math.random() < 0.5 && valeraCooldown <= Date.now()) {
-            valeraCooldown = Date.now() + 2500;
+        // Валера ревнует Кису
+        if (!mentionedValera && lower.includes("@киса") && Math.random() < 0.7 && valeraCooldown <= Date.now()) {
+            valeraCooldown = Date.now() + 2000;
             const r = valeraJealous[Math.floor(Math.random() * valeraJealous.length)];
-            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 500);
+            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 400);
         }
 
         // Киса отвечает, если её упомянули
         if (mentionedKisa) {
             const reply = kisaReplies[Math.floor(Math.random() * kisaReplies.length)];
-            setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, reply), 350);
+            setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, reply), 250);
         }
 
-        // Валера флиртует с Кисой случайно
-        if (Math.random() < 0.05 && valeraCooldown <= Date.now()) {
-            valeraCooldown = Date.now() + 2500;
+        // Валера флиртует с Кисой
+        if (Math.random() < 0.08 && valeraCooldown <= Date.now()) {
+            valeraCooldown = Date.now() + 2000;
             const r = valeraFlirt[Math.floor(Math.random() * valeraFlirt.length)];
-            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 500);
+            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 400);
         }
 
-        // Киса отвечает Валере иногда
-        if (lower.includes("валер") && Math.random() < 0.4) {
+        // Киса отвечает Валере
+        if (lower.includes("валер") && Math.random() < 0.5) {
             const r = kisaToValera[Math.floor(Math.random() * kisaToValera.length)];
-            setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, r), 600);
+            setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, r), 300);
         }
 
-        // Киса иногда пишет сама
-        if (Math.random() < 0.03 && kisaCooldown <= Date.now()) {
-            kisaCooldown = Date.now() + 3000;
+        // Киса случайно пишет сама
+        if (Math.random() < 0.05 && kisaCooldown <= Date.now()) {
+            kisaCooldown = Date.now() + 2000;
             const r = kisaReplies[Math.floor(Math.random() * kisaReplies.length)];
-            setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, r), 700);
+            setTimeout(() => sendBot(BOT_KISA.name, BOT_KISA.color, r), 400);
         }
+
+        // Валера пишет сам по рандому
+        if (Math.random() < 0.06 && valeraCooldown <= Date.now()) {
+            valeraCooldown = Date.now() + 1500;
+            const r = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
+            setTimeout(() => sendBot(BOT_VALERA.name, BOT_VALERA.color, r), 350);
+        }
+
     });
 });
 
