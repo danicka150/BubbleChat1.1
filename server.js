@@ -1,90 +1,73 @@
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import { readFile } from "fs/promises";
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const path = require("path");
 
 const app = express();
-const server = createServer(app);
+const server = http.createServer(app);
 const io = new Server(server);
 
-const PORT = process.env.PORT || 3000;
+// статика (index.html и т.п.)
+app.use(express.static(path.join(__dirname)));
 
-// отдаём index.html
-app.get("/", async (req, res) => {
-    try {
-        const data = await readFile("index.html");
-        res.setHeader("Content-Type", "text/html");
-        res.send(data);
-    } catch (err) {
-        res.status(500).send("Ошибка сервера");
-    }
+// список подключённых пользователей
+let users = {};
+
+io.on("connection", (socket) => {
+    console.log("Новый пользователь:", socket.id);
+
+    // пользователь заходит
+    socket.on("setName", (name) => {
+        users[socket.id] = {
+            name: name,
+            color: getRandomColor()
+        };
+
+        io.emit("userList", Object.values(users));
+        io.emit("chatMessage", {
+            name: "Система",
+            color: "gray",
+            message: `${name} зашел в чат`
+        });
+    });
+
+    // обычное сообщение
+    socket.on("chatMessage", (msg) => {
+        const user = users[socket.id];
+        if (!user) return;
+
+        io.emit("chatMessage", {
+            name: user.name,
+            color: user.color,
+            message: msg
+        });
+    });
+
+    // отключение
+    socket.on("disconnect", () => {
+        if (users[socket.id]) {
+            io.emit("chatMessage", {
+                name: "Система",
+                color: "gray",
+                message: `${users[socket.id].name} вышел`
+            });
+            delete users[socket.id];
+            io.emit("userList", Object.values(users));
+        }
+    });
 });
 
-// случайный цвет ника
+// случайный цвет для обычных пользователей
 function getRandomColor() {
-    const colors = ["#ff4040", "#40ff40", "#4080ff", "#ff80ff", "#ffff40", "#40ffff", "#ffa040"];
+    const colors = [
+        "#ff4444", "#44ff44", "#4488ff",
+        "#ffaa00", "#ff00ff", "#00ffaa",
+        "#cccc00", "#ff6699"
+    ];
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// Боты
-const BOT_VALERA = { name: "Валера", color: "#ffa500" };
-const BOT_KISA   = { name: "Киса", color: "#ff66cc" };
-
-// фразы Валеры
-const valeraReplies = [
-    "че бля", "а чё происходит?", "я тут", "я не понял...", "кто меня звал?", "шо надо?",
-    "я занят был вообще-то", "кто в чате?", "а вы нормальные?", "че сидим?", "я ща приду...",
-    "не зови меня просто так", "да-да, я тут", "чел ты...", "я думал я один", "че делаете?",
-    "я считаю что вы странные", "мдааа...", "ладно, я пришел"
-];
-
-// фразы Кисы
-const kisaReplies = [
-    "я тут…", "мяу… рядом с вами", "что такое?", "я здесь", "а вы милые",
-    "мне приятно тут быть", "как у вас дела?", "мне так уютно с вами", "я слушаю…"
-];
-
-// отправка сообщения от бота
-function sendBot(nick, color, text) {
-    io.emit("chat-message", { nick, color, text });
-}
-
-// Валера пишет каждые 3–7 секунд
-function valeraTalk() {
-    const msg = valeraReplies[Math.floor(Math.random() * valeraReplies.length)];
-    console.log("Валера пишет:", msg); // для проверки на сервере
-    sendBot(BOT_VALERA.name, BOT_VALERA.color, msg);
-    setTimeout(valeraTalk, 3000 + Math.random() * 4000); // 3–7 секунд
-}
-valeraTalk();
-
-// Киса пишет каждые 5–10 секунд
-function kisaTalk() {
-    const msg = kisaReplies[Math.floor(Math.random() * kisaReplies.length)];
-    console.log("Киса пишет:", msg); // для проверки на сервере
-    sendBot(BOT_KISA.name, BOT_KISA.color, msg);
-    setTimeout(kisaTalk, 5000 + Math.random() * 5000); // 5–10 секунд
-}
-kisaTalk();
-
-// сокеты
-io.on("connection", socket => {
-    socket.on("set-nickname", nick => {
-        socket.nickname = nick;
-        socket.color = getRandomColor();
-        io.emit("system", ${nick} вошёл в чат);
-
-        // Киса приветствует нового пользователя сразу
-        setTimeout(() => {
-            const msg = kisaReplies[Math.floor(Math.random() * kisaReplies.length)];
-            sendBot(BOT_KISA.name, BOT_KISA.color, msg);
-        }, 1000);
-    });
-
-    socket.on("chat-message", msg => {
-        io.emit("chat-message", { nick: socket.nickname, color: socket.color, text: msg });
-    });
+const PORT = 3000;
+server.listen(PORT, () => {
+    console.log("Сервер запущен на порту", PORT);
 });
-
-// запуск сервера
-server.listen(PORT, () => console.log(BubbleChat запущен на порту ${PORT}));
