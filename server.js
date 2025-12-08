@@ -120,7 +120,12 @@ const kisa = {
     "ммм, интересно общаться 😘",
     "ух ты, как круто 😍",
      "так если ты обидешь меня я пожалуюсь валере", 
-     "люблю тебя малышка"
+     "люблю тебя малышка",
+      "давай встречаться",
+     "а ты прикольный",
+      "ты милый",
+       "покатаемся на твоей тачке?",
+       "был бы ты ботом..."
   ]
 };
 
@@ -170,7 +175,7 @@ setInterval(() => {
   const target = random(clients);
   const action = Math.random() < 0.5 ? random(valeraCompliments) : random(valeraTrolls);
   sendBotMessage(valera, `@${target.nickname}, ${action}`);
-}, 30000 + Math.random() * 30000);
+}, 7000 + Math.random() * 7000);
 
 /* -------------------- Валера <-> Киса -------------------- */
 setInterval(() => {
@@ -187,7 +192,7 @@ setInterval(() => {
   if (clients.length === 0) return;
   const target = random(clients);
   sendBotMessage(kisa, `@${target.nickname}, ${random(kisa.phrases)}`);
-}, 15000 + Math.random() * 15000);
+}, 8000 + Math.random() * 8000);
 
 /* ===================== SOCKET.IO ===================== */
 io.on("connection", (socket) => {
