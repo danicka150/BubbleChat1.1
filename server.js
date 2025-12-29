@@ -113,6 +113,7 @@ io.on("connection", (socket) => {
   socket.nickname = null;
   socket.color = getRandomColor();
 
+  /* Установка ника */
   socket.on("set-nickname", (nick) => {
     if (!nick || typeof nick !== "string") return;
 
@@ -121,13 +122,23 @@ io.on("connection", (socket) => {
 
     io.emit("system", `${socket.nickname} вошёл в чат`);
 
+    /* Валера заходит один раз и пишет постоянно */
     if (!valera.joined) {
       setTimeout(() => {
         io.emit("system", `${valera.nick} вошёл в чат`);
         valera.joined = true;
+
+        const sendValeraLoop = () => {
+          if (!valera.joined) return;
+          const resp = getValeraResponse("");
+          sendBotMessage(valera, resp);
+          setTimeout(sendValeraLoop, 2000 + Math.random() * 3000);
+        };
+        sendValeraLoop();
       }, 1000);
     }
 
+    /* Киса заходит один раз */
     if (!kisa.joined) {
       setTimeout(() => {
         io.emit("system", `${kisa.nick} вошёл в чат`);
@@ -136,16 +147,19 @@ io.on("connection", (socket) => {
     }
   });
 
+  /* Получение сообщений */
   socket.on("chat-message", (msgText) => {
     if (!socket.nickname) return;
 
     io.emit("chat-message", { nick: socket.nickname, color: socket.color, text: msgText });
 
+    /* Валера реагирует на сообщения */
     if (valera.joined && Math.random() < 0.7) {
       const resp = getValeraResponse(msgText);
       setTimeout(() => sendBotMessage(valera, resp), 800 + Math.random() * 1200);
     }
 
+    /* Киса реагирует на триггеры */
     if (kisa.joined) {
       for (const r of kisaFlirtResponses) {
         if (r.trigger.test(msgText)) {
