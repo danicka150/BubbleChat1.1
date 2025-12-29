@@ -2,6 +2,11 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { readFile } from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = createServer(app);
@@ -9,10 +14,10 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-/* ------------------ отдаём index.html ------------------ */
+/* Отдаём клиент */
 app.get("/", async (req, res) => {
   try {
-    const data = await readFile("index.html");
+    const data = await readFile(path.join(__dirname, "index.html"));
     res.setHeader("Content-Type", "text/html");
     res.send(data);
   } catch (err) {
@@ -21,28 +26,26 @@ app.get("/", async (req, res) => {
   }
 });
 
-/* --------------- утилиты: цвета никнеймов -------------- */
+/* Случайные цвета */
 function getRandomColor() {
-  const colors = ["#ff4040", "#40ff40", "#4040ff", "#ff80ff", "#ffff40", "#40ffff", "#ffaa00", "#a56cff"];
+  const colors = ["#ff4040","#40ff40","#4040ff","#ff80ff","#ffff40","#40ffff","#ffaa00","#a56cff"];
   return colors[Math.floor(Math.random() * colors.length)];
 }
 
 function random(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-/* ===================== ВАЛЕРА-БОТ ===================== */
+/* ===== Валера ===== */
 const valera = {
   nick: "Валера",
   color: "#ffaa00",
   joined: false
 };
 
-/* -------------------- Старые рандомные фразы -------------------- */
 const valeraRandomPhrases = [
   "Кто вообще тут?", "Чё молчим?", "Я тут сижу, если что.", "Аууу, люди?",
-  "Ща бы пожрать…", "Кто-то вообще умеет писать?", "Эх… скучно.", "Чат умер?",
-  "Пойду в окно посмотрю. Шутка, я бот.", "че бля", "мда...", "что за ерунда?",
-  "вы серьёзно?", "ох уж эти люди...", "лол, опять вы", "иди на хуй",
-  "ты охуел?", "да ну нахуй", "ёбаный чат", "ну и долбоёбы тут сидят",
+  "Ща бы пожрать…", "Кто-то вообще умеет писать?", "Эх… скучно.", "Пойду в окно посмотрю. Шутка, я бот.",
+  "че бля", "мда...", "что за ерунда", "вы серьёзно?", "ох уж эти люди...", "лол, опять вы",
+  "иди на хуй", "ты охуел?", "да ну нахуй", "ёбаный чат", "ну и долбоёбы тут сидят",
   "мне насрать", "опять эти мудаки", "создатель котак", "тот кто читает тот лох",
   "ебаный рот ебать ты шуллер", "а вы знали что екатерина 2 не умела менять колодки на гранте",
   "кстати егор гей", "я лох,ок?", "ебать вы все ебланы", "дядь петрович котак",
@@ -72,7 +75,7 @@ const valeraTrolls = [
   "Na, dann heul doch jetzt los, du Dicker."
 ];
 
-/* ===================== КИСА-БОТ ===================== */
+/* ===== Киса ===== */
 const kisa = {
   nick: "Киса",
   color: "#ff69b4",
@@ -90,146 +93,74 @@ const kisaFlirtResponses = [
   { trigger: /чё молчим/i, responses: ["Да я слушаю… только тебя 😘", "Ну я здесь 😏"] },
   { trigger: /че бля|иди на хуй|ты охуел|да ну нахуй|ёбаный|долбоёбы/i, responses: ["Ой, Валера… ты такой 😘", "Хаха, ты шалун 😏"] }
 ];
-/* ===================== РАСПОЗНАВАНИЕ И МАТ ===================== */
-function normalize(text) {
-  return text.toLowerCase().replace(/[^\wа-яё0-9\s]/gi, '').trim();
+
+/* Отправка сообщений от ботов */
+function sendBotMessage(bot, text) {
+  io.emit("chat-message", { nick: bot.nick, color: bot.color, text });
 }
 
-// реакции Валеры на мат
-const matResponses = [
-  "да все звали ебало",
-  "поплачь тут ещё",
-  "иди нахуй",
-  "сам иди нахуй",
-  "тебе похуй, а мне нет",
-  "хуяк тебе в ебало",
-  "охуеть, опять ты",
-  "пошёл нахуй со своими словами",
-  "да ты пиздец полный",
-  "ебанат, ну ёб твою мать"
-];
-
-// максимальный список мата
-const mats = [
-  "хуй","хуя","хую","пизд","еба","ебу","ебёт","ебут","еблан","ебло","мудак","долбоёб","бляд",
-  "бля","оху","охуеть","охуел","охуенно","тупой","идиот","дебил","сука","сволочь","манда","залупа",
-  "гондон","пидор","шлюха","хер","сосать","нахуй","пиздец","бляха","ебаный","ёб","ёбнуть","ёбаный",
-  "уёбок","похуй","пизда","пиздюл","ебан","срать","дрочить","говно","говнюк","дрочила","соси","ебись",
-  "гавно","мудачок","мудила","сукин сын","хуев","хуесос","пидрила","залупа","пидарас","ебанат","шалава",
-  "ебланище","пиздюк","охуел","охуевший","хуевый","сука блядь","ёбаный рот"
-];
-
-// проверка на мат
-function containsMat(text) {
-  const msg = normalize(text);
-  return mats.some(mat => msg.includes(mat));
-}
-
-// генерация ответа Валеры
-function getValeraResponse(userMsg) {
-  const msg = normalize(userMsg);
-
-  // приоритет: мат на мат
-  if (containsMat(msg)) return random(matResponses);
-
-  // стандартные триггеры Валеры
-  for (const rule of valeraTriggers) {
-    if (rule.trigger.test(msg)) {
-      return random(rule.responses);
-    }
+function getValeraResponse(msg) {
+  const lower = msg.toLowerCase();
+  for (const troll of valeraTrolls) {
+    if (lower.includes(troll.toLowerCase())) return random(valeraRandomPhrases);
   }
-
-  // если ничего не распознано — случайная фраза
+  if (Math.random() < 0.3) return random(valeraCompliments);
   return random(valeraRandomPhrases);
 }
 
-/* -------------------- Функция отправки сообщений -------------------- */
-function sendBotMessage(bot, text) {
-  io.emit("chat-message", {
-    nick: bot.nick,
-    color: bot.color,
-    text
-  });
-}
-
-/* -------------------- Вход ботов в чат -------------------- */
-setTimeout(() => { io.emit("system", ${valera.nick} вошёл в чат); valera.joined = true; }, 1000);
-setTimeout(() => { io.emit("system", ${kisa.nick} вошёл в чат); kisa.joined = true; }, 1000);
-
-/* -------------------- Валера рандомные реплики -------------------- */
-setInterval(() => {
-  if (!valera.joined) return;
-  sendBotMessage(valera, random(valeraRandomPhrases));
-
-  // Киса реагирует на реплики Валеры
-  if (kisa.joined) {
-    kisaFlirtResponses.forEach(rule => {
-      if (rule.trigger.test(random(valeraRandomPhrases)) && Math.random() < 0.7) {
-        setTimeout(() => {
-          sendBotMessage(kisa, random(rule.responses));
-        }, 1000 + Math.random() * 2000);
-      }
-    });
-  }
-}, 6000 + Math.random() * 6000);
-
-/* -------------------- Валера троллит пользователей -------------------- */
-setInterval(() => {
-  if (!valera.joined) return;
-  const clients = Array.from(io.sockets.sockets.values())
-    .filter(s => s.nickname && s.nickname !== valera.nick && s.nickname !== kisa.nick);
-  if (clients.length === 0) return;
-  const target = random(clients);
-  const action = Math.random() < 0.5 ? random(valeraCompliments) : random(valeraTrolls);
-  sendBotMessage(valera, @${target.nickname}, ${action});
-}, 7000 + Math.random() * 7000);
-
-/* -------------------- Валера <-> Киса -------------------- */
-setInterval(() => {
-  if (!valera.joined || !kisa.joined) return;
-  if (Math.random() < 0.5) sendBotMessage(valera, @${kisa.nick}, ${random(valeraCompliments)});
-  if (Math.random() < 0.5) sendBotMessage(kisa, @${valera.nick}, ${random(kisa.phrases)});
-}, 60000 + Math.random() * 30000);
-
-/* -------------------- Киса действия с пользователями -------------------- */
-setInterval(() => {
-  if (!kisa.joined) return;
-  const clients = Array.from(io.sockets.sockets.values())
-    .filter(s => s.nickname && s.nickname !== kisa.nick);
-  if (clients.length === 0) return;
-  const target = random(clients);
-  sendBotMessage(kisa, @${target.nickname}, ${random(kisa.phrases)});
-}, 8000 + Math.random() * 8000);
-/* ===================== SOCKET.IO ===================== */
+/* Подключения */
 io.on("connection", (socket) => {
-  socket.on("set-nickname", (nick) => {
-    socket.nickname = nick;
-    socket.color = getRandomColor();
-    io.emit("system", ${nick} вошёл в чат);
+  socket.nickname = null;
+  socket.color = getRandomColor();
 
-    if (kisa.joined) {
+  socket.on("set-nickname", (nick) => {
+    if (!nick || typeof nick !== "string") return;
+
+    socket.nickname = nick.trim();
+    if (!socket.nickname) return;
+
+    io.emit("system", `${socket.nickname} вошёл в чат`);
+
+    if (!valera.joined) {
       setTimeout(() => {
-        sendBotMessage(kisa, @${nick}, привет!);
-      }, 500);
+        io.emit("system", `${valera.nick} вошёл в чат`);
+        valera.joined = true;
+      }, 1000);
+    }
+
+    if (!kisa.joined) {
+      setTimeout(() => {
+        io.emit("system", `${kisa.nick} вошёл в чат`);
+        kisa.joined = true;
+      }, 1500);
     }
   });
 
   socket.on("chat-message", (msgText) => {
-    const fromNick = socket.nickname || "Гость";
-    io.emit("chat-message", {
-      nick: fromNick,
-      color: socket.color || "#ffffff",
-      text: msgText
-    });
+    if (!socket.nickname) return;
 
-    // Валера реагирует на сообщение
-    if (valera.joined) {
+    io.emit("chat-message", { nick: socket.nickname, color: socket.color, text: msgText });
+
+    if (valera.joined && Math.random() < 0.7) {
       const resp = getValeraResponse(msgText);
-      setTimeout(() => sendBotMessage(valera, resp), 1000 + Math.random() * 2000);
+      setTimeout(() => sendBotMessage(valera, resp), 800 + Math.random() * 1200);
     }
+
+    if (kisa.joined) {
+      for (const r of kisaFlirtResponses) {
+        if (r.trigger.test(msgText)) {
+          const resp = random(r.responses);
+          setTimeout(() => sendBotMessage(kisa, resp), 1000 + Math.random() * 1500);
+        }
+      }
+    }
+  });
+
+  socket.on("disconnect", () => {
+    if (socket.nickname) io.emit("system", `${socket.nickname} вышел из чата`);
   });
 });
 
 server.listen(PORT, () => {
-  console.log(BubbleChat запущен на порту ${PORT});
+  console.log(`BubbleChat запущен на порту ${PORT}`);
 });
