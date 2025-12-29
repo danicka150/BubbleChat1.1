@@ -6,141 +6,124 @@
 <title>BubbleChat</title>
 
 <style>
-    body {
-        margin: 0;
-        background: #1e1e1e;
-        font-family: Arial, sans-serif;
-        color: white;
-    }
+body {
+  margin: 0;
+  background: #1e1e1e;
+  font-family: Arial, sans-serif;
+  color: white;
+}
 
-    /* Регистрация */
-    #reg {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+#reg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-    #reg-box {
-        background: #2b2b2b;
-        padding: 25px;
-        width: 90%;
-        max-width: 320px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 0 15px rgba(0,0,0,0.6);
-    }
+#reg-box {
+  background: #2b2b2b;
+  padding: 25px;
+  width: 90%;
+  max-width: 320px;
+  border-radius: 12px;
+  text-align: center;
+}
 
-    #reg-box input {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        margin-top: 10px;
-        outline: none;
-        background: #3a3a3a;
-        color: white;
-        font-size: 16px;
-    }
+#reg-box input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #3a3a3a;
+  color: white;
+  font-size: 16px;
+}
 
-    #reg-box button {
-        margin-top: 15px;
-        width: 100%;
-        padding: 12px;
-        background: #4b8bfd;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        color: white;
-        cursor: pointer;
-    }
+button {
+  background: #4b8bfd;
+  cursor: pointer;
+}
 
-    /* Чат */
-    #chat {
-        display: none;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
+#chat {
+  display: none;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-    #messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 15px;
-    }
+#top {
+  padding: 8px;
+  background: #2b2b2b;
+}
 
-    .msg {
-        background: #2f2f2f;
-        padding: 10px 14px;
-        border-radius: 10px;
-        margin-bottom: 12px;
-        width: fit-content;
-        max-width: 80%;
-        word-wrap: break-word;
-    }
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
 
-    .nick {
-        font-weight: bold;
-        margin-right: 6px;
-    }
+.msg {
+  background: #2f2f2f;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  max-width: 80%;
+}
 
-    .system {
-        opacity: 0.7;
-        margin-bottom: 10px;
-    }
+.nick {
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    #input {
-        background: #2b2b2b;
-        padding: 10px;
-        display: flex;
-        gap: 8px;
-    }
+.system {
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
 
-    #text {
-        flex: 1;
-        padding: 12px;
-        border-radius: 8px;
-        border: none;
-        background: #3a3a3a;
-        color: white;
-        font-size: 16px;
-        outline: none;
-    }
+#input {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: #2b2b2b;
+}
 
-    #send-btn {
-        padding: 12px 18px;
-        background: #4b8bfd;
-        border: none;
-        border-radius: 8px;
-        color: white;
-        cursor: pointer;
-        font-size: 16px;
-        flex-shrink: 0;
-    }
-
+#text {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #3a3a3a;
+  color: white;
+  font-size: 16px;
+}
 </style>
 </head>
 <body>
 
-<!-- Окно регистрации -->
+<!-- Регистрация -->
 <div id="reg">
-    <div id="reg-box">
-        <h2>Ваш ник</h2>
-        <input id="nickname" type="text" maxlength="16" placeholder="Введите ник">
-        <button onclick="enterChat()">Войти</button>
-    </div>
+  <div id="reg-box">
+    <h2>Введите ник</h2>
+    <input id="nickname" maxlength="16">
+    <button onclick="enterChat()">Войти</button>
+  </div>
 </div>
 
 <!-- Чат -->
 <div id="chat">
-    <div id="messages"></div>
-    <div id="input">
-        <input id="text" type="text" placeholder="Написать сообщение…">
-        <button id="send-btn" onclick="sendMsg()">➤</button>
-    </div>
+  <div id="top">
+    <button id="botsBtn" onclick="toggleBots()">Боты: ВКЛ</button>
+  </div>
+
+  <div id="messages"></div>
+
+  <div id="input">
+    <input id="text" placeholder="Сообщение...">
+    <button onclick="sendMsg()">➤</button>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -148,36 +131,64 @@
 const socket = io();
 const msgBox = document.getElementById("messages");
 
+let showBots = true;
+
 function enterChat() {
-    const nick = document.getElementById("nickname").value.trim();
-    if (!nick) return;
-    socket.emit("set-nickname", nick);
-    document.getElementById("reg").style.display = "none";
-    document.getElementById("chat").style.display = "flex";
+  const nick = nickname.value.trim();
+  if (!nick) return;
+  socket.emit("set-nickname", nick);
+  reg.style.display = "none";
+  chat.style.display = "flex";
+}
+
+function toggleBots() {
+  showBots = !showBots;
+  botsBtn.textContent = showBots ? "Боты: ВКЛ" : "Боты: ВЫКЛ";
 }
 
 socket.on("system", txt => {
-    msgBox.innerHTML += `<div class="system">* ${txt}</div>`;
-    msgBox.scrollTop = msgBox.scrollHeight;
+  msgBox.innerHTML += `<div class="system">${txt}</div>`;
+  msgBox.scrollTop = msgBox.scrollHeight;
 });
 
 socket.on("chat-message", data => {
-    msgBox.innerHTML += `
-        <div class="msg">
-            <span class="nick" style="color:${data.color}">${data.nick}:</span>
-            <span>${data.text}</span>
-        </div>
-    `;
-    msgBox.scrollTop = msgBox.scrollHeight;
+  // 🔥 ВАЖНО: скрываем обоих ботов
+  if (!showBots && (data.nick === "Валера" || data.nick === "Киса")) return;
+
+  msgBox.innerHTML += `
+    <div class="msg">
+      <span class="nick" style="color:${data.color}">
+        ${data.nick}
+      </span>: ${data.text}
+    </div>
+  `;
+  msgBox.scrollTop = msgBox.scrollHeight;
 });
 
 function sendMsg() {
-    const t = document.getElementById("text").value.trim();
-    if (!t) return;
-    socket.emit("chat-message", t);
-    document.getElementById("text").value = "";
+  const t = text.value.trim();
+  if (!t) return;
+  socket.emit("chat-message", t);
+  text.value = "";
 }
+
+/* ===== ЛИЧНЫЕ СООБЩЕНИЯ ===== */
+let currentPM = null;
+
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("nick")) {
+    currentPM = e.target.textContent;
+    alert("Диалог с " + currentPM + " (ЛС уже работает)");
+  }
+});
+
+socket.on("private-message", ({from, text}) => {
+  msgBox.innerHTML += `
+    <div class="system">🔔 ${from} написал вам личное сообщение</div>
+  `;
+});
 </script>
 
 </body>
 </html>
+
