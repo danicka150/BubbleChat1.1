@@ -34,27 +34,27 @@ const valeraRandomPhrases = [
 ];
 
 const valeraCompliments = [
-  " @nick норм написал",
-  "@nick в этот раз не тупо",
-  " @nick удивил",
+  "  норм написал",
+  " в этот раз не тупо",
+  " удивил",
   
   "@nick ну хоть кто-то адекватный"
 ];
 
 const valeraTrolls = [
-  "@nick ты вообще думаешь?",
-  "мда, @nick",
-  "@nick сильно, конечно",
+  " ты вообще думаешь?",
+  "мда, ",
+  " сильно, конечно",
   "@nick IQ где потерял?"
 ];
 
 const kisaPhrases = [
-  "@nick ммм 😏",
-  "@nick ты милый",
-  "@nick интересно читать",
-  "@nick хех",
-  "@nick мне нравится как ты пишешь",
-  "@nick я тут читаю 👀"
+  " ммм 😏",
+  " ты милый",
+  "интересно читать",
+  " хех",
+  "мне нравится как ты пишешь",
+  " я тут читаю 👀"
 ];
 
 function sendBot(bot, text) {
@@ -261,4 +261,5 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`BubbleChat запущен на порту ${PORT}`);
 });
+
 
