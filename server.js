@@ -8,8 +8,6 @@ const server = createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-
-/* ===== ХРАНЕНИЕ ===== */
 const CHAT_FILE = "./chat.json";
 let messages = [];
 
@@ -22,11 +20,7 @@ try {
 function saveChat() {
   writeFile(CHAT_FILE, JSON.stringify(messages, null, 2));
 }
-
-/* ===== ПОЛЬЗОВАТЕЛИ ===== */
-const users = new Map(); // nick -> socket.id
-
-/* ===== ЦВЕТ НИКА ===== */
+const users = new Map(); 
 function colorFromNick(nick) {
   let hash = 0;
   for (let i = 0; i < nick.length; i++) {
@@ -35,8 +29,6 @@ function colorFromNick(nick) {
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 70%, 60%)`;
 }
-
-/* ===== СТАТИКА ===== */
 app.get("/", async (req, res) => {
   const data = await readFile("index.html");
   res.setHeader("Content-Type", "text/html");
@@ -47,8 +39,6 @@ app.get("/", async (req, res) => {
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
-
-/* ===== БОТЫ ===== */
 let botsEnabled = true;
 
 const valera = { nick: "Валера", color: "#ffaa00" };
@@ -63,7 +53,11 @@ const valeraPhrases = [
   "2+2=5",
   "зима не лето, салат не котлета",
   "вы серьёзно?",
-  "лол"
+  "лол",
+  "ееееееее",
+  "супер чат",
+  "с новым годом",
+  "я крутой бот вы все лохи хохохохохохохохохохо"
 ];
 
 const kisaPhrases = [
@@ -91,8 +85,6 @@ function botMessage(bot, phrases) {
   saveChat();
   io.emit("chat-message", msg);
 }
-
-/* ===== АВТОПИСАНИЕ БОТОВ ===== */
 setInterval(() => {
   if (Math.random() < 0.7) {
     botMessage(valera, valeraPhrases);
@@ -104,14 +96,8 @@ setInterval(() => {
     botMessage(kisa, kisaPhrases);
   }
 }, 6000);
-
-/* ===== SOCKET ===== */
 io.on("connection", (socket) => {
-
-  // отправляем историю
   socket.emit("chat-history", messages);
-
-  /* === НИК === */
   socket.on("set-nickname", (nick) => {
     if (!nick) return;
 
@@ -119,17 +105,16 @@ io.on("connection", (socket) => {
     socket.color = colorFromNick(nick);
     users.set(nick, socket.id);
 
-    io.emit("system", `${nick} вошёл`);
+    io.emit("system", `${nick} пришел с олимпа`);
   });
 
-  /* === СООБЩЕНИЯ === */
   socket.on("chat-message", ({ text, to = null }) => {
     if (!socket.nickname || !text) return;
 
     const msg = {
       from: socket.nickname,
       color: socket.color,
-      to, // null = общий, ник = ЛС
+      to, 
       text,
       time: Date.now(),
       bot: false
@@ -138,11 +123,11 @@ io.on("connection", (socket) => {
     messages.push(msg);
     saveChat();
 
-    // ВСЕМ, клиент сам фильтрует
+    
     io.emit("chat-message", msg);
   });
 
-  /* === ВКЛ/ВЫКЛ БОТОВ === */
+  
   socket.on("toggle-bots", () => {
     botsEnabled = !botsEnabled;
     io.emit("system", `Боты ${botsEnabled ? "включены" : "выключены"}`);
@@ -151,12 +136,13 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     if (socket.nickname) {
       users.delete(socket.nickname);
-      io.emit("system", `${socket.nickname} вышел`);
+      io.emit("system", `${socket.nickname} убежал плакать`);
     }
   });
 });
 
-/* ===== START ===== */
+
 server.listen(PORT, () => {
-  console.log(`BubbleChat запущен на порту ${PORT}`);
+  console.log(`чупапи муняню ${PORT}`);
 });
+
