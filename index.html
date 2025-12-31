@@ -57,6 +57,9 @@ button {
 #top {
   padding: 8px;
   background: #2b2b2b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 #messages {
@@ -103,6 +106,26 @@ button {
   color: white;
   font-size: 16px;
 }
+
+/* ЛС индикатор */
+#pmBox {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: #1f3b66;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+#pmClose {
+  cursor: pointer;
+  font-weight: bold;
+  opacity: 0.7;
+}
+
+#pmClose:hover {
+  opacity: 1;
+}
 </style>
 </head>
 <body>
@@ -120,7 +143,11 @@ button {
 <div id="chat">
   <div id="top">
     <button id="botsBtn" onclick="toggleBots()">Боты: ВКЛ</button>
-    <span id="pmInfo"></span>
+
+    <div id="pmBox">
+      <span id="pmText"></span>
+      <span id="pmClose" onclick="exitPM()">✖</span>
+    </div>
   </div>
 
   <div id="messages"></div>
@@ -152,6 +179,11 @@ function enterChat() {
 function toggleBots() {
   showBots = !showBots;
   botsBtn.textContent = showBots ? "Боты: ВКЛ" : "Боты: ВЫКЛ";
+}
+
+function exitPM() {
+  currentPM = null;
+  pmBox.style.display = "none";
 }
 
 socket.on("system", txt => {
@@ -206,13 +238,11 @@ function sendMsg() {
 document.addEventListener("click", e => {
   if (e.target.classList.contains("nick")) {
     currentPM = e.target.textContent;
-    pmInfo.textContent = currentPM
-      ? `ЛС с ${currentPM}`
-      : "";
+    pmText.textContent = "ЛС с " + currentPM;
+    pmBox.style.display = "flex";
   }
 });
 </script>
 
 </body>
 </html>
-
