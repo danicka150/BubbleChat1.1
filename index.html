@@ -73,6 +73,10 @@ button {
   max-width: 80%;
 }
 
+.msg.pm {
+  border-left: 4px solid #4b8bfd;
+}
+
 .nick {
   font-weight: bold;
   cursor: pointer;
@@ -116,6 +120,7 @@ button {
 <div id="chat">
   <div id="top">
     <button id="botsBtn" onclick="toggleBots()">Боты: ВКЛ</button>
+    <span id="pmInfo"></span>
   </div>
 
   <div id="messages"></div>
@@ -131,11 +136,14 @@ button {
 const socket = io();
 const msgBox = document.getElementById("messages");
 
+let myNick = null;
 let showBots = true;
+let currentPM = null;
 
 function enterChat() {
   const nick = nickname.value.trim();
   if (!nick) return;
+  myNick = nick;
   socket.emit("set-nickname", nick);
   reg.style.display = "none";
   chat.style.display = "flex";
@@ -151,41 +159,57 @@ socket.on("system", txt => {
   msgBox.scrollTop = msgBox.scrollHeight;
 });
 
+socket.on("chat-history", history => {
+  history.forEach(renderMessage);
+});
+
 socket.on("chat-message", data => {
-  // 🔥 ВАЖНО: скрываем обоих ботов
-  if (!showBots && (data.nick === "Валера" || data.nick === "Киса")) return;
+  renderMessage(data);
+});
+
+function renderMessage(data) {
+  // фильтр ЛС
+  if (
+    data.to !== null &&
+    data.to !== myNick &&
+    data.from !== myNick
+  ) return;
+
+  // фильтр ботов
+  if (data.bot && !showBots) return;
+
+  const isPM = data.to !== null;
 
   msgBox.innerHTML += `
-    <div class="msg">
+    <div class="msg ${isPM ? "pm" : ""}">
       <span class="nick" style="color:${data.color}">
-        ${data.nick}
+        ${data.from}
       </span>: ${data.text}
     </div>
   `;
   msgBox.scrollTop = msgBox.scrollHeight;
-});
+}
 
 function sendMsg() {
   const t = text.value.trim();
   if (!t) return;
-  socket.emit("chat-message", t);
+
+  socket.emit("chat-message", {
+    text: t,
+    to: currentPM
+  });
+
   text.value = "";
 }
 
-/* ===== ЛИЧНЫЕ СООБЩЕНИЯ ===== */
-let currentPM = null;
-
+// клик по нику → ЛС
 document.addEventListener("click", e => {
   if (e.target.classList.contains("nick")) {
     currentPM = e.target.textContent;
-    alert("Диалог с " + currentPM + " (ЛС уже работает)");
+    pmInfo.textContent = currentPM
+      ? `ЛС с ${currentPM}`
+      : "";
   }
-});
-
-socket.on("private-message", ({from, text}) => {
-  msgBox.innerHTML += `
-    <div class="system">🔔 ${from} написал вам личное сообщение</div>
-  `;
 });
 </script>
 
