@@ -26,7 +26,7 @@ function saveChat() {
 
 const users = new Map();
 
-/* ===== УТИЛЫ ===== */
+/* ===== UTILS ===== */
 
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -46,7 +46,7 @@ function isAggressive(text = "") {
   return bad.some(w => text.toLowerCase().includes(w));
 }
 
-/* ===== СТАТИКА ===== */
+/* ===== STATIC ===== */
 
 app.get("/", async (req, res) => {
   const data = await readFile("index.html");
@@ -54,61 +54,56 @@ app.get("/", async (req, res) => {
   res.send(data);
 });
 
-/* ===== БОТЫ ===== */
+/* ===== BOTS ===== */
 
 const valera = { nick: "Валера", color: "#ffaa00" };
 const kisa   = { nick: "Киса", color: "#ff69b4" };
 
+/* 🔥 ВАЛЕРА — тролль с интересом к людям */
 const valeraPhrases = [
-  "че бля",
-  "мда...",
-  "чат мёртв",
-  "ну и движ",
-  "мне насрать",
-  "2+2=5",
-  "зима не лето, салат не котлета",
-  "вы серьёзно?",
-  "лол",
-  "ееееееее",
-  "супер чат",
-  "я тут главный хаос",
-  "вы NPC или живые?",
-  "кринж уровень максимум",
-  "я сейчас кого-то вынесу морально",
-  "чат как всегда 💀",
-  "вы вообще читаете что пишете?"
+  "ты странный, но в этом есть стиль",
+  "я бы поспорил, но ты слишком уверенно несёшь чушь",
+  "интересный ты тип, не спорю",
+  "у тебя мышление как баг, но стабильный",
+  "я тебя почти уважаю, и это пугает",
+  "ты шумный, но не пустой",
+  "ладно, ты не безнадёжен",
+  "ты как эксперимент, который вышел из-под контроля",
+  "я не злюсь, мне просто любопытно наблюдать",
+  "ты слишком уверенный для такого результата",
+  "чат бы без тебя был скучнее"
 ];
 
+/* 😼 КИСА — холодная элита, минимум слов */
 const kisaPhrases = [
-  "ммм 😏",
-  "ты милый",
-  "интересно тут",
-  "я просто читаю 👀",
-  "хех",
-  "мне нравится этот чат",
-  "ребят, не ссорьтесь",
-  "давайте чуть спокойнее",
-  "вы забавные когда спорите",
-  "ой, опять начинается...",
-  "я за мир в этом цирке",
-  "ну хватит уже, ребят",
-  "Валера, остынь 😼"
+  "интересно",
+  "неплохо",
+  "слишком громко",
+  "почти достойно",
+  "ты стараешься",
+  "забавно",
+  "я поняла",
+  "логики мало, но стиль есть",
+  "ты предсказуем",
+  "почти впечатлил"
 ];
+
+/* ===== BOT CORE ===== */
 
 function botMessage(bot, phrases) {
   if (!botsEnabled) return;
 
   let text = random(phrases);
 
-  // 👇 реакция Валеры на агрессию
+  // Валера реагирует на агрессию пользователей
   if (bot.nick === "Валера" && lastMessage) {
     if (isAggressive(lastMessage.text)) {
       text = random([
-        "ооо, токсик пошёл 💀",
-        "да ты сам-то норм?",
-        "я ща разнесу этот чат",
-        "NPC detected",
-        "кринж атака принята"
+        "ооо, ты сейчас перегнул",
+        "смело, но глупо",
+        "я бы не советовал тебе продолжать",
+        "чат сейчас упростился до уровня ссоры",
+        "NPC detected"
       ]);
     }
   }
@@ -129,20 +124,20 @@ function botMessage(bot, phrases) {
   io.emit("chat-message", msg);
 }
 
-/* ===== КИСА (умный миротворец) ===== */
+/* ===== КИСА (реакции + флирт с Валерой) ===== */
 
 setInterval(() => {
   if (!botsEnabled) return;
 
   let text;
 
-  if (lastMessage && isAggressive(lastMessage.text) && lastMessage.from !== "Киса") {
+  // если Валера недавно писал → лёгкий флирт-подкол
+  if (lastMessage && lastMessage.from === "Валера") {
     text = random([
-      "Валера, хватит уже 😼",
-      "ребят, давайте без жести",
-      "я сейчас вас разниму",
-      "ну всё, успокоились оба",
-      "давайте жить дружно"
+      "ты опять стараешься быть громким",
+      "Валера, ты забавный сегодня",
+      "слишком много тебя в воздухе",
+      "я наблюдаю за тобой"
     ]);
   } else {
     text = random(kisaPhrases);
@@ -162,15 +157,15 @@ setInterval(() => {
   messages.push(msg);
   saveChat();
   io.emit("chat-message", msg);
-}, 5000);
+}, 6500);
 
 /* ===== ВАЛЕРА ===== */
 
 setInterval(() => {
-  if (Math.random() < 0.7) {
+  if (Math.random() < 0.75) {
     botMessage(valera, valeraPhrases);
   }
-}, 8000);
+}, 7000);
 
 /* ===== SOCKET ===== */
 
@@ -184,7 +179,7 @@ io.on("connection", (socket) => {
     socket.color = colorFromNick(nick);
     users.set(nick, socket.id);
 
-    io.emit("system", `${nick} пришел с олимпа`);
+    io.emit("system", `${nick} вошёл в чат`);
   });
 
   socket.on("chat-message", ({ text, to = null }) => {
@@ -214,11 +209,11 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     if (socket.nickname) {
       users.delete(socket.nickname);
-      io.emit("system", `${socket.nickname} убежал плакать`);
+      io.emit("system", `${socket.nickname} вышел`);
     }
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`чупапи муняню ${PORT}`);
+  console.log(`server running on ${PORT}`);
 });
