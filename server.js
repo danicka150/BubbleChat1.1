@@ -26,6 +26,8 @@ function saveChat() {
 
 const users = new Map();
 
+/* ===== UTILS ===== */
+
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -44,6 +46,35 @@ function isAggressive(text = "") {
   return bad.some(w => text.toLowerCase().includes(w));
 }
 
+/* ===== ФРАЗОВЫЙ ГЕНЕРАТОР (убирает повторяемость) ===== */
+
+const vibes = [
+  "интересный ты",
+  "странный ты",
+  "шумный ты",
+  "уверенный ты",
+  "забавный ты",
+  "опасно уверенный ты",
+  "слишком громкий ты"
+];
+
+const endings = [
+  "но ладно",
+  "но окей",
+  "но интересно",
+  "но странно",
+  "и это факт",
+  "и это забавно",
+  "я наблюдаю"
+];
+
+function buildPhrase(prefixes, subjects) {
+  const a = random(prefixes);
+  const b = random(subjects);
+  const c = random(endings);
+  return `${a}, ${b}... ${c}`;
+}
+
 /* ===== STATIC ===== */
 
 app.get("/", async (req, res) => {
@@ -57,68 +88,63 @@ app.get("/", async (req, res) => {
 const valera = { nick: "Валера", color: "#ffaa00" };
 const kisa   = { nick: "Киса", color: "#ff69b4" };
 
-/* 🔥 ВАЛЕРА — теперь снова тролль + хаос + немного “смысла” */
-const valeraPhrases = [
-  "че бля, вы тут опять?",
-  "чат как обычно умер и ожил",
-  "мне насрать, но смешно",
-  "вы серьёзно это пишете?",
-  "лол, вы NPC все",
-  "я тут главный клоун",
-  "да вы все странные",
-  "кринж уровень: стабильно высокий",
-  "я ща кого-то морально вынесу",
-  "зачем я это читаю вообще",
-  "ну вы даёте конечно 💀",
-  "интересный ты тип, не спорю",
-  "ты шумный, но не пустой",
-  "ладно, ты почти норм",
-  "я тебя даже немного уважаю (ошибка системы)",
-  "ты как баг, который не фиксится",
-  "чат без меня бы сдох",
-  "хах, смешно наблюдать"
+/* 🔥 ВАЛЕРА — расширенный пул */
+const valeraBase = [
+  "чат как обычно живёт своей жизнью",
+  "я тут главный хаос",
+  "вы серьёзно это обсуждаете?",
+  "мне даже немного смешно",
+  "я наблюдаю за этим цирком",
+  "кринж стабилен",
+  "вы все NPC, но разные версии",
+  "ладно, ты не самый худший тут",
+  "я бы поспорил, но лень",
+  "ты опять отличился"
 ];
 
-/* 😼 КИСА — короткая элита + обычные реакции + лёгкий флирт */
-const kisaPhrases = [
-  "ммм",
+/* 😼 КИСА — короткая элита */
+const kisaBase = [
+  "ок",
   "понятно",
   "интересно",
-  "окей",
-  "слишком громко",
-  "ты стараешься",
-  "почти хорошо",
-  "я поняла",
-  "логики мало",
+  "шумно",
+  "почти",
   "забавно",
-  "ты предсказуем",
+  "логично",
+  "нет",
+  "возможно",
+  "наблюдаю",
   "неплохо",
-  "слишком много шума",
-  "хех",
-  "ты мило тупишь иногда",
-  "Валера опять шумит",
-  "я наблюдаю",
-  "мне всё равно, но интересно",
-  "ты не безнадёжен"
+  "слишком уверенно",
+  "я поняла"
 ];
 
 /* ===== BOT CORE ===== */
 
-function botMessage(bot, phrases) {
+function botMessage(bot, base) {
   if (!botsEnabled) return;
 
-  let text = random(phrases);
+  let text;
 
-  if (bot.nick === "Валера" && lastMessage) {
-    if (isAggressive(lastMessage.text)) {
+  if (bot.nick === "Валера") {
+    // иногда генератор, иногда база
+    text = Math.random() < 0.5
+      ? buildPhrase(vibes, base)
+      : random(base);
+
+    if (lastMessage && isAggressive(lastMessage.text)) {
       text = random([
-        "ооо, токсик пошёл 💀",
-        "смело, но тупо",
         "ты сейчас перегнул",
+        "смело, но глупо",
         "NPC detected",
-        "я это даже не буду комментировать"
+        "я это даже комментировать не хочу",
+        "чат упростился до конфликта"
       ]);
     }
+  } else {
+    text = Math.random() < 0.6
+      ? buildPhrase(["ты", "это", "всё"], kisaBase)
+      : random(kisaBase);
   }
 
   const msg = {
@@ -146,13 +172,13 @@ setInterval(() => {
 
   if (lastMessage && lastMessage.from === "Валера") {
     text = random([
-      "Валера, ты опять шумный",
-      "слишком стараешься",
+      "ты снова шумишь",
+      "Валера, хватит",
       "я наблюдаю за тобой",
-      "не перегибай"
+      "слишком заметный"
     ]);
   } else {
-    text = random(kisaPhrases);
+    text = random(kisaBase);
   }
 
   const msg = {
@@ -174,8 +200,8 @@ setInterval(() => {
 /* ===== ВАЛЕРА ===== */
 
 setInterval(() => {
-  if (Math.random() < 0.75) {
-    botMessage(valera, valeraPhrases);
+  if (Math.random() < 0.8) {
+    botMessage(valera, valeraBase);
   }
 }, 7000);
 
@@ -194,13 +220,12 @@ io.on("connection", (socket) => {
     io.emit("system", `${nick} вошёл в чат`);
   });
 
-  socket.on("chat-message", ({ text, to = null }) => {
+  socket.on("chat-message", ({ text }) => {
     if (!socket.nickname || !text) return;
 
     const msg = {
       from: socket.nickname,
       color: socket.color,
-      to,
       text,
       time: Date.now(),
       bot: false
@@ -229,3 +254,4 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`server running on ${PORT}`);
 });
+ 
